@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ba4949" />
+  <meta name="description" content="Pomofocus - Ứng dụng Pomodoro giúp bạn tập trung và quản lý thời gian hiệu quả." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pomodoro" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Pomodoro — Focus Timer</title>
+</head>
+<body>
+  <div id="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 6c-1 0-1.8.3-2.5.8C8.8 6.3 8 6 7 6 4.8 6 3 7.9 3 10.3 3 14.5 7.5 19 12 21c4.5-2 9-6.5 9-10.7C21 7.9 19.2 6 17 6c-1 0-1.8.3-2.5.8C13.8 6.3 13 6 12 6z"/>
+        </svg>
+        <span class="brand-name">Pomodoro</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="statsBtn" class="icon-btn" aria-label="Thống kê" title="Thống kê">
+          <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        </button>
+        <button id="settingsBtn" class="icon-btn" aria-label="Cài đặt" title="Cài đặt">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Mode tabs -->
+      <div class="modes">
+        <button class="mode-tab active" data-mode="pomodoro">Pomodoro</button>
+        <button class="mode-tab" data-mode="short">Nghỉ ngắn</button>
+        <button class="mode-tab" data-mode="long">Nghỉ dài</button>
+      </div>
+
+      <!-- Timer ring -->
+      <div class="timer-wrap">
+        <svg class="ring" viewBox="0 0 280 280">
+          <circle class="ring-bg" cx="140" cy="140" r="130" />
+          <circle class="ring-progress" cx="140" cy="140" r="130" />
+        </svg>
+        <div class="timer-center">
+          <div id="time" class="time">25:00</div>
+          <div id="modeLabel" class="mode-label">Giờ tập trung</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button id="startBtn" class="btn-main">BẮT ĐẦU</button>
+        <button id="skipBtn" class="icon-btn skip-btn" aria-label="Bỏ qua" title="Bỏ qua">
+          <svg viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>
+        </button>
+      </div>
+
+      <div class="round-info">
+        <span id="roundCount">#1</span>
+        <span class="round-sep">·</span>
+        <span id="roundHint">Đến lúc tập trung!</span>
+      </div>
+
+      <!-- Tasks -->
+      <section class="tasks">
+        <div class="tasks-header">
+          <h2>Công việc</h2>
+          <button id="clearDoneBtn" class="text-btn">Xoá đã xong</button>
+        </div>
+        <ul id="taskList" class="task-list"></ul>
+        <form id="taskForm" class="task-add">
+          <input id="taskInput" type="text" placeholder="Thêm công việc..." autocomplete="off" maxlength="120" />
+          <div class="est-wrap">
+            <button type="button" id="estMinus" class="est-btn" aria-label="Giảm">−</button>
+            <span id="estVal" class="est-val">1</span>
+            <button type="button" id="estPlus" class="est-btn" aria-label="Tăng">+</button>
+          </div>
+          <button type="submit" class="add-btn" aria-label="Thêm">+</button>
+        </form>
+        <div id="taskSummary" class="task-summary"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Cài đặt</h2>
+        <button class="icon-btn modal-close" data-close aria-label="Đóng">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h3 class="group-title">⏱ Thời lượng (phút)</h3>
+        <div class="setting-row">
+          <label for="durPomodoro">Pomodoro</label>
+          <input id="durPomodoro" type="number" min="1" max="180" />
+        </div>
+        <div class="setting-row">
+          <label for="durShort">Nghỉ ngắn</label>
+          <input id="durShort" type="number" min="1" max="60" />
+        </div>
+        <div class="setting-row">
+          <label for="durLong">Nghỉ dài</label>
+          <input id="durLong" type="number" min="1" max="60" />
+        </div>
+
+        <h3 class="group-title">🔁 Tự động</h3>
+        <div class="setting-row">
+          <label for="longInterval">Số pomodoro trước nghỉ dài</label>
+          <input id="longInterval" type="number" min="1" max="12" />
+        </div>
+        <div class="setting-row toggle-row">
+          <label for="autoBreaks">Tự động bắt đầu nghỉ</label>
+          <label class="switch"><input id="autoBreaks" type="checkbox" /><span class="slider"></span></label>
+        </div>
+        <div class="setting-row toggle-row">
+          <label for="autoPomodoros">Tự động bắt đầu Pomodoro</label>
+          <label class="switch"><input id="autoPomodoros" type="checkbox" /><span class="slider"></span></label>
+        </div>
+
+        <h3 class="group-title">🔔 Thông báo</h3>
+        <div class="setting-row toggle-row">
+          <label for="soundOn">Âm thanh báo</label>
+          <label class="switch"><input id="soundOn" type="checkbox" /><span class="slider"></span></label>
+        </div>
+        <div class="setting-row">
+          <label for="volume">Âm lượng</label>
+          <input id="volume" type="range" min="0" max="100" />
+        </div>
+        <div class="setting-row toggle-row">
+          <label for="notifyOn">Thông báo hệ thống</label>
+          <label class="switch"><input id="notifyOn" type="checkbox" /><span class="slider"></span></label>
+        </div>
+
+        <h3 class="group-title">🎨 Giao diện</h3>
+        <div class="setting-row toggle-row">
+          <label for="darkMode">Chế độ tối</label>
+          <label class="switch"><input id="darkMode" type="checkbox" /><span class="slider"></span></label>
+        </div>
+
+        <button id="resetSettings" class="btn-secondary">Khôi phục mặc định</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats modal -->
+  <div id="statsModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Thống kê</h2>
+        <button class="icon-btn modal-close" data-close aria-label="Đóng">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div id="statToday" class="stat-num">0</div>
+            <div class="stat-cap">Pomodoro hôm nay</div>
+          </div>
+          <div class="stat-card">
+            <div id="statFocus" class="stat-num">0p</div>
+            <div class="stat-cap">Tập trung hôm nay</div>
+          </div>
+          <div class="stat-card">
+            <div id="statStreak" class="stat-num">0</div>
+            <div class="stat-cap">Chuỗi ngày</div>
+          </div>
+          <div class="stat-card">
+            <div id="statTotal" class="stat-num">0</div>
+            <div class="stat-cap">Tổng pomodoro</div>
+          </div>
+        </div>
+        <h3 class="group-title">7 ngày gần đây</h3>
+        <div id="weekChart" class="week-chart"></div>
+        <button id="resetStats" class="btn-secondary">Xoá thống kê</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
