@@ -16,12 +16,16 @@
 - 🔔 **Chuông báo** 4 kiểu (bíp / chuông gió / chuông / kỹ thuật số), **tiếng tích tắc**, rung, thông báo hệ thống.
 - 📱 **Giữ màn hình sáng** khi đồng hồ chạy (Screen Wake Lock).
 - 🎉 **Hiệu ứng pháo giấy** khi hoàn thành mỗi pomodoro.
+- 🧘 **Chế độ tập trung (Zen)**: ẩn mọi thứ, chỉ còn đồng hồ, có thể bật toàn màn hình.
+- 🗂 **Lịch sử phiên** + **bản đồ nhiệt hoạt động 12 tuần** kiểu GitHub.
+- 📝 **Ghi chú cho từng công việc**.
 - 🌐 **Đa ngôn ngữ** (Tiếng Việt / English) chuyển ngay tức thì.
-- 🎨 **7 bảng màu** + chế độ **Sáng / Tối / Tự động** theo hệ thống.
+- 🎨 **7 bảng màu + màu tùy chỉnh** (tự tạo tông nghỉ ngắn/dài theo HSL) + chế độ **Sáng / Tối / Tự động**.
+- 🔖 **Favicon động** hiển thị tiến độ và số phút còn lại ngay trên tab trình duyệt.
 - 💾 **Sao lưu / khôi phục** toàn bộ dữ liệu dưới dạng JSON.
-- 💬 **Câu trích dẫn động** truyền cảm hứng.
-- 📲 **PWA**: cài vào màn hình chính, chạy offline (Service Worker), có **lối tắt** (tập trung / thống kê).
-- ⌨️ **Phím tắt** (desktop): `Space` chạy/dừng, `S` bỏ qua, `R` đặt lại.
+- 💬 **Câu trích dẫn động** truyền cảm hứng + hiệu ứng "thở" của vòng tròn khi chạy.
+- 📲 **PWA**: nút **cài đặt vào màn hình chính**, chạy offline (Service Worker), có **lối tắt** (tập trung / thống kê).
+- ⌨️ **Phím tắt** (desktop): `Space` chạy/dừng, `S` bỏ qua, `R` đặt lại, `Z` chế độ Zen, `Esc` thoát Zen.
 
 ## 🚀 Chạy thử
 

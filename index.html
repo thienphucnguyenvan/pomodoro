@@ -10,12 +10,16 @@
   <meta name="apple-mobile-web-app-title" content="Pomodoro" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="icon" id="favicon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
   <title>Pomodoro — Focus Timer</title>
 </head>
 <body>
   <canvas id="confetti" class="confetti"></canvas>
+
+  <button id="zenExit" class="zen-exit" hidden aria-label="Thoát chế độ tập trung">
+    <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
 
   <div id="app">
     <!-- Top bar -->
@@ -28,6 +32,12 @@
         <span class="brand-name">Pomodoro</span>
       </div>
       <div class="topbar-actions">
+        <button id="zenBtn" class="icon-btn" aria-label="Chế độ tập trung" title="Chế độ tập trung">
+          <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        </button>
+        <button id="installBtn" class="icon-btn" aria-label="Cài đặt ứng dụng" title="Cài đặt ứng dụng" hidden>
+          <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </button>
         <button id="langBtn" class="icon-btn lang-btn" aria-label="Language" title="Ngôn ngữ"><span id="langCode">VI</span></button>
         <button id="statsBtn" class="icon-btn" aria-label="Thống kê" title="Thống kê">
           <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
@@ -200,6 +210,14 @@
         </div>
         <h3 class="group-title" data-i18n="stats.last7">7 ngày gần đây</h3>
         <div id="weekChart" class="week-chart"></div>
+
+        <h3 class="group-title" data-i18n="stats.activity">Hoạt động 12 tuần</h3>
+        <div class="heatmap-wrap"><div id="heatmap" class="heatmap"></div></div>
+        <div class="heat-legend"><span data-i18n="stats.less">Ít</span><span class="hl hl0"></span><span class="hl hl1"></span><span class="hl hl2"></span><span class="hl hl3"></span><span class="hl hl4"></span><span data-i18n="stats.more">Nhiều</span></div>
+
+        <h3 class="group-title" data-i18n="stats.history">Lịch sử gần đây</h3>
+        <ul id="historyList" class="history-list"></ul>
+
         <button id="resetStats" class="btn-secondary danger" data-i18n="stats.reset">Xoá thống kê</button>
       </div>
     </div>
@@ -223,6 +241,8 @@
           <span id="editEstVal" class="est-val">1</span>
           <button type="button" id="editEstPlus" class="est-btn">+</button>
         </div>
+        <label class="field-label" for="editNote" data-i18n="edit.note">Ghi chú</label>
+        <textarea id="editNote" class="field-input" rows="2" maxlength="240"></textarea>
         <div class="reorder-row">
           <button id="moveUp" class="btn-secondary" data-i18n="edit.moveUp">↑ Lên trên</button>
           <button id="moveDown" class="btn-secondary" data-i18n="edit.moveDown">↓ Xuống dưới</button>

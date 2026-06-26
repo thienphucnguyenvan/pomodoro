@@ -46,6 +46,9 @@
       'notify.toShort': 'Đến giờ nghỉ ngắn.', 'notify.breakOverTitle': 'Hết giờ nghỉ ⏰', 'notify.breakOverBody': 'Quay lại tập trung nào!',
       'confirm.switch': 'Đang chạy đồng hồ. Chuyển chế độ sẽ đặt lại thời gian?',
       'confirm.resetStats': 'Xoá toàn bộ thống kê?', 'confirm.import': 'Nhập sao lưu sẽ ghi đè dữ liệu hiện tại. Tiếp tục?',
+      'stats.activity': 'Hoạt động 12 tuần', 'stats.history': 'Lịch sử gần đây', 'stats.less': 'Ít', 'stats.more': 'Nhiều',
+      'stats.historyEmpty': 'Chưa có phiên nào hoàn thành.', 'stats.noTask': 'Không có công việc',
+      'edit.note': 'Ghi chú', 'toast.installed': 'Đã cài đặt ứng dụng! 🎉', 'time.today': 'Hôm nay', 'time.yesterday': 'Hôm qua',
       'unit.min': 'p',
     },
     en: {
@@ -88,6 +91,9 @@
       'notify.toShort': 'Time for a short break.', 'notify.breakOverTitle': 'Break over ⏰', 'notify.breakOverBody': "Let's get back to it!",
       'confirm.switch': 'Timer is running. Switching mode will reset it?',
       'confirm.resetStats': 'Clear all statistics?', 'confirm.import': 'Importing will overwrite current data. Continue?',
+      'stats.activity': '12-week activity', 'stats.history': 'Recent history', 'stats.less': 'Less', 'stats.more': 'More',
+      'stats.historyEmpty': 'No completed sessions yet.', 'stats.noTask': 'No task',
+      'edit.note': 'Note', 'toast.installed': 'App installed! 🎉', 'time.today': 'Today', 'time.yesterday': 'Yesterday',
       'unit.min': 'm',
     },
   };
@@ -116,7 +122,7 @@
     soundOn: true, alarmSound: 'beep', volume: 70, tickingOn: false,
     ambient: 'none', ambientVol: 40,
     notifyOn: false, wakeLockOn: true,
-    theme: 'tomato', appearance: 'auto', lang: 'vi',
+    theme: 'tomato', appearance: 'auto', lang: 'vi', customColor: '#ba4949',
   };
   const MODE_META = {
     pomodoro: { label: 'label.focusTime', hint: 'hint.focus', body: 'mode-pomodoro' },
@@ -144,7 +150,8 @@
   let settings = Object.assign({}, DEFAULT_SETTINGS, store.get('settings', {}));
   lang = settings.lang || 'vi';
   let tasks = store.get('tasks', []);
-  let stats = store.get('stats', { history: {}, total: 0, bestStreak: 0 });
+  let stats = store.get('stats', { history: {}, total: 0, bestStreak: 0, sessions: [] });
+  if (!Array.isArray(stats.sessions)) stats.sessions = [];
   let activeTaskId = store.get('activeTaskId', null);
 
   let mode = 'pomodoro';
@@ -354,11 +361,51 @@
     if (settings.appearance === 'light') return false;
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
+  // HSL helpers for custom color
+  function hexToHsl(hex) {
+    let r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b); let h = 0, s = 0; const l = (max + min) / 2;
+    if (max !== min) {
+      const d = max - min; s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = (g - b) / d + (g < b ? 6 : 0); else if (max === g) h = (b - r) / d + 2; else h = (r - g) / d + 4;
+      h *= 60;
+    }
+    return [h, s * 100, l * 100];
+  }
+  function hslToHex(h, s, l) {
+    s /= 100; l /= 100; h = ((h % 360) + 360) % 360;
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) [r, g, b] = [c, x, 0]; else if (h < 120) [r, g, b] = [x, c, 0]; else if (h < 180) [r, g, b] = [0, c, x];
+    else if (h < 240) [r, g, b] = [0, x, c]; else if (h < 300) [r, g, b] = [x, 0, c]; else [r, g, b] = [c, 0, x];
+    const to = (v) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
+    return '#' + to(r) + to(g) + to(b);
+  }
+  function customColors() {
+    const [h, s, l] = hexToHsl(settings.customColor || '#ba4949');
+    return {
+      pomodoro: settings.customColor || '#ba4949',
+      short: hslToHex(h + 160, Math.min(70, s), Math.min(45, Math.max(30, l))),
+      long: hslToHex(h + 205, Math.min(65, s), Math.min(48, Math.max(32, l))),
+    };
+  }
   function applyTheme() {
-    document.documentElement.dataset.theme = settings.theme;
+    const root = document.documentElement;
+    root.dataset.theme = settings.theme;
+    if (settings.theme === 'custom') {
+      const cc = customColors();
+      root.style.setProperty('--accent-pomodoro', cc.pomodoro);
+      root.style.setProperty('--accent-short', cc.short);
+      root.style.setProperty('--accent-long', cc.long);
+    } else {
+      root.style.removeProperty('--accent-pomodoro');
+      root.style.removeProperty('--accent-short');
+      root.style.removeProperty('--accent-long');
+    }
     document.body.classList.toggle('dark', effectiveDark());
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.content = effectiveDark() ? '#1f1f25' : (THEME_COLORS[settings.theme]?.[mode] || '#ba4949');
+    const accent = settings.theme === 'custom' ? customColors()[mode] : (THEME_COLORS[settings.theme]?.[mode] || '#ba4949');
+    if (meta) meta.content = effectiveDark() ? '#1f1f25' : accent;
   }
   function renderMode() {
     document.body.classList.remove('mode-pomodoro', 'mode-short', 'mode-long');
@@ -372,6 +419,35 @@
   function renderControls() {
     startBtn.textContent = running ? t('btn.pause') : t('btn.start');
     startBtn.classList.toggle('running', running);
+    document.querySelector('.timer-wrap').classList.toggle('pulsing', running);
+  }
+
+  // ---------- Dynamic favicon ----------
+  let favCanvas = null, favLastSec = -1;
+  function updateFavicon() {
+    try {
+      const link = document.getElementById('favicon'); if (!link) return;
+      if (!favCanvas) { favCanvas = document.createElement('canvas'); favCanvas.width = 64; favCanvas.height = 64; }
+      const c = favCanvas.getContext('2d');
+      const color = THEME_COLORS[settings.theme] ? THEME_COLORS[settings.theme][mode] : '#ba4949';
+      const accent = settings.theme === 'custom' ? (customColors()[mode]) : color;
+      c.clearRect(0, 0, 64, 64);
+      c.fillStyle = accent; c.beginPath(); c.arc(32, 32, 32, 0, Math.PI * 2); c.fill();
+      // progress ring
+      const frac = totalSeconds > 0 ? Math.max(0, remaining) / totalSeconds : 1;
+      c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 6;
+      c.beginPath(); c.arc(32, 32, 26, 0, Math.PI * 2); c.stroke();
+      c.strokeStyle = '#fff'; c.lineWidth = 6; c.lineCap = 'round';
+      c.beginPath(); c.arc(32, 32, 26, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); c.stroke();
+      // minutes text
+      c.fillStyle = '#fff'; c.font = 'bold 26px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillText(String(Math.ceil(Math.max(0, remaining) / 60)), 32, 34);
+      link.type = 'image/png'; link.href = favCanvas.toDataURL('image/png');
+    } catch {}
+  }
+  function resetFavicon() {
+    const link = document.getElementById('favicon'); if (link) { link.type = 'image/svg+xml'; link.href = 'icons/icon.svg'; }
+    favLastSec = -1;
   }
   function renderGoal() {
     const today = stats.history[todayKey()] || { count: 0 };
@@ -391,23 +467,23 @@
     endTimestamp = Date.now() + remaining * 1000;
     lastTickSecond = Math.ceil(remaining);
     ticker = setInterval(onTick, 250);
-    renderControls(); requestWakeLock(); startAmbient();
+    renderControls(); requestWakeLock(); startAmbient(); favLastSec = -1; updateFavicon();
   }
   function pauseTimer() {
     if (!running) return;
     running = false; clearInterval(ticker); ticker = null;
     remaining = Math.max(0, (endTimestamp - Date.now()) / 1000);
     endTimestamp = null;
-    renderControls(); renderTime(); releaseWakeLock(); stopAmbient();
+    renderControls(); renderTime(); releaseWakeLock(); stopAmbient(); resetFavicon();
   }
   function toggleTimer() { running ? pauseTimer() : startTimer(); }
   function onTick() {
     remaining = (endTimestamp - Date.now()) / 1000;
     if (remaining <= 0) { remaining = 0; renderTime(); completeSession(); return; }
-    if (mode === 'pomodoro' && settings.tickingOn) {
-      const sec = Math.ceil(remaining);
-      if (sec !== lastTickSecond) { lastTickSecond = sec; playTick(); }
-    }
+    const sec = Math.ceil(remaining);
+    if (mode === 'pomodoro' && settings.tickingOn && sec !== lastTickSecond) playTick();
+    if (sec !== favLastSec) { favLastSec = sec; updateFavicon(); }
+    lastTickSecond = sec;
     renderTime();
   }
   function setMode(newMode, { reset = true } = {}) {
@@ -417,7 +493,7 @@
   }
   function stopAndReset(newMode) {
     running = false; clearInterval(ticker); ticker = null; endTimestamp = null;
-    releaseWakeLock(); stopAmbient();
+    releaseWakeLock(); stopAmbient(); resetFavicon();
     setMode(newMode, { reset: true }); renderControls();
   }
 
@@ -455,7 +531,7 @@
   }
   function resetCurrent() {
     running = false; clearInterval(ticker); ticker = null; endTimestamp = null;
-    releaseWakeLock(); stopAmbient();
+    releaseWakeLock(); stopAmbient(); resetFavicon();
     remaining = durationFor(mode); totalSeconds = remaining;
     renderControls(); renderTime(); persistRuntime();
   }
@@ -483,6 +559,9 @@
     stats.history[key].count += 1;
     stats.history[key].minutes += settings.pomodoro;
     stats.total = (stats.total || 0) + 1;
+    const active = tasks.find((x) => x.id === activeTaskId);
+    stats.sessions.unshift({ ts: Date.now(), task: active ? active.name : null, minutes: settings.pomodoro });
+    if (stats.sessions.length > 200) stats.sessions.length = 200;
     const cur = computeStreak();
     stats.bestStreak = Math.max(stats.bestStreak || 0, cur);
     store.set('stats', stats);
@@ -521,6 +600,60 @@
       col.innerHTML = `<span class="bar-val">${c || ''}</span><div class="bar${isToday ? ' today' : ''}" style="height:${Math.max(c ? 6 : 2, h)}%"></div><span class="bar-label">${dayNames[d.getDay()]}</span>`;
       chart.appendChild(col);
     });
+
+    renderHeatmap();
+    renderHistory();
+  }
+
+  function renderHeatmap() {
+    const heat = $('#heatmap'); if (!heat) return;
+    heat.innerHTML = '';
+    const weeks = 12, totalDays = weeks * 7;
+    const today = new Date();
+    // align so the last column ends today; start from the Sunday (weeks-1)*7 back
+    const start = new Date(today); start.setDate(start.getDate() - (totalDays - 1));
+    // shift start back to its weekday position so rows line up by weekday
+    start.setDate(start.getDate() - start.getDay());
+    const level = (c) => c === 0 ? '' : c < 2 ? 'l1' : c < 4 ? 'l2' : c < 6 ? 'l3' : 'l4';
+    const cur = new Date(start);
+    const todayStr = todayKey();
+    while (cur <= today || cur.getDay() !== 0) {
+      const k = todayKey(cur);
+      const c = (stats.history[k]?.count) || 0;
+      const cell = document.createElement('div');
+      cell.className = 'heat-cell ' + level(c);
+      cell.title = `${k}: ${c} 🍅`;
+      if (k === todayStr) cell.style.outline = '2px solid var(--bg)';
+      heat.appendChild(cell);
+      cur.setDate(cur.getDate() + 1);
+      if (cur > today && cur.getDay() === 0) break;
+    }
+  }
+
+  function relTime(ts) {
+    const d = new Date(ts), k = todayKey(d);
+    const time = d.toLocaleTimeString(lang === 'en' ? 'en-US' : 'vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    if (k === todayKey()) return `${t('time.today')} ${time}`;
+    if (k === todayKey(y)) return `${t('time.yesterday')} ${time}`;
+    return d.toLocaleDateString(lang === 'en' ? 'en-US' : 'vi-VN', { day: '2-digit', month: '2-digit' }) + ' ' + time;
+  }
+
+  function renderHistory() {
+    const list = $('#historyList'); if (!list) return;
+    list.innerHTML = '';
+    const items = (stats.sessions || []).slice(0, 12);
+    if (items.length === 0) {
+      const li = document.createElement('li'); li.className = 'history-empty'; li.textContent = t('stats.historyEmpty');
+      list.appendChild(li); return;
+    }
+    items.forEach((s) => {
+      const li = document.createElement('li'); li.className = 'history-item';
+      const name = document.createElement('span'); name.className = 'history-task';
+      name.textContent = '🍅 ' + (s.task || t('stats.noTask'));
+      const tm = document.createElement('span'); tm.className = 'history-time'; tm.textContent = relTime(s.ts);
+      li.appendChild(name); li.appendChild(tm); list.appendChild(li);
+    });
   }
 
   // ---------- Tasks ----------
@@ -537,9 +670,10 @@
       if (task.id === activeTaskId && !task.done) li.classList.add('active');
       li.innerHTML = `
         <button class="task-check" aria-label="${t('tasks.done')}"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></button>
-        <div class="task-body"><div class="task-name"></div><div class="task-meta">${task.done ? '✓ ' + t('tasks.done') + ' · ' : ''}${task.completed}/${task.est} 🍅</div></div>
+        <div class="task-body"><div class="task-name"></div><div class="task-meta">${task.done ? '✓ ' + t('tasks.done') + ' · ' : ''}${task.completed}/${task.est} 🍅</div>${task.note ? '<div class="task-note"></div>' : ''}</div>
         <button class="task-edit" aria-label="edit"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>`;
       li.querySelector('.task-name').textContent = task.name;
+      if (task.note) li.querySelector('.task-note').textContent = task.note;
       li.querySelector('.task-check').addEventListener('click', (e) => { e.stopPropagation(); toggleTaskDone(task.id); });
       li.querySelector('.task-edit').addEventListener('click', (e) => { e.stopPropagation(); openEdit(task.id); });
       li.querySelector('.task-body').addEventListener('click', () => setActiveTask(task.id));
@@ -591,12 +725,14 @@
     const tk = tasks.find((x) => x.id === id); if (!tk) return;
     editingId = id; editEst = tk.est;
     $('#editName').value = tk.name; $('#editEstVal').textContent = editEst;
+    $('#editNote').value = tk.note || '';
     $('#editModal').hidden = false;
   }
   function saveEdit() {
     const tk = tasks.find((x) => x.id === editingId); if (!tk) return;
     const name = $('#editName').value.trim(); if (name) tk.name = name;
-    tk.est = editEst; if (tk.completed >= tk.est) { tk.done = true; }
+    tk.est = editEst; tk.note = $('#editNote').value.trim();
+    if (tk.completed >= tk.est) { tk.done = true; }
     saveTasks(); renderTasks(); $('#editModal').hidden = true;
   }
   function moveTask(dir) {
@@ -622,10 +758,24 @@
     THEMES.forEach((th) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'swatch' + (th === settings.theme ? ' selected' : '');
       b.style.background = THEME_COLORS[th].pomodoro; b.setAttribute('aria-label', th);
-      b.addEventListener('click', () => { settings.theme = th; store.set('settings', settings); applyTheme(); renderSwatches(); });
+      b.addEventListener('click', () => { settings.theme = th; store.set('settings', settings); applyTheme(); renderSwatches(); updateFaviconIfRunning(); });
       wrap.appendChild(b);
     });
+    // custom color swatch
+    const cb = document.createElement('button'); cb.type = 'button';
+    cb.className = 'swatch custom' + (settings.theme === 'custom' ? ' selected' : '');
+    cb.setAttribute('aria-label', 'custom');
+    if (settings.theme === 'custom') { cb.style.background = settings.customColor; cb.classList.add('picked'); }
+    const picker = document.createElement('input'); picker.type = 'color'; picker.value = settings.customColor || '#ba4949';
+    picker.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+    picker.addEventListener('input', () => {
+      settings.customColor = picker.value; settings.theme = 'custom'; store.set('settings', settings);
+      applyTheme(); renderSwatches(); updateFaviconIfRunning();
+    });
+    cb.addEventListener('click', () => picker.click());
+    wrap.appendChild(cb); wrap.appendChild(picker);
   }
+  function updateFaviconIfRunning() { if (running) { favLastSec = -1; updateFavicon(); } }
   function clampInt(v, min, max, def) { const n = parseInt(v, 10); return isNaN(n) ? def : Math.min(max, Math.max(min, n)); }
   function readSettingsFromForm() {
     settings.pomodoro = clampInt($('#durPomodoro').value, 1, 180, 25);
@@ -713,8 +863,39 @@
     } else remaining = rt.remaining != null ? rt.remaining : durationFor(mode);
   }
 
+  // ---------- Zen mode ----------
+  function toggleZen() {
+    const on = !document.body.classList.contains('zen');
+    document.body.classList.toggle('zen', on);
+    $('#zenExit').hidden = !on;
+    try {
+      if (on && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+      else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    } catch {}
+  }
+  function exitZen() {
+    document.body.classList.remove('zen'); $('#zenExit').hidden = true;
+    try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch {}
+  }
+
+  // ---------- Install prompt ----------
+  let deferredPrompt = null;
+  async function doInstall() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    try { await deferredPrompt.userChoice; } catch {}
+    deferredPrompt = null; $('#installBtn').hidden = true;
+  }
+
   // ---------- Events ----------
   function wireEvents() {
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; $('#installBtn').hidden = false; });
+    window.addEventListener('appinstalled', () => { deferredPrompt = null; $('#installBtn').hidden = true; toast(t('toast.installed')); });
+    $('#installBtn').addEventListener('click', doInstall);
+    $('#zenBtn').addEventListener('click', toggleZen);
+    $('#zenExit').addEventListener('click', exitZen);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('zen')) exitZen(); });
+
     startBtn.addEventListener('click', () => { ensureAudio(); toggleTimer(); persistRuntime(); });
     $('#skipBtn').addEventListener('click', skipSession);
     $('#resetBtn').addEventListener('click', resetCurrent);
@@ -771,6 +952,7 @@
       if (e.code === 'Space') { e.preventDefault(); toggleTimer(); persistRuntime(); }
       if (e.key.toLowerCase() === 's') skipSession();
       if (e.key.toLowerCase() === 'r') resetCurrent();
+      if (e.key.toLowerCase() === 'z') toggleZen();
     });
 
     document.addEventListener('visibilitychange', () => {
