@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d35d5d"/>
+      <stop offset="1" stop-color="#ba4949"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- tomato body -->
+  <circle cx="256" cy="296" r="150" fill="#ffffff"/>
+  <!-- timer face arc -->
+  <circle cx="256" cy="296" r="150" fill="none" stroke="#ba4949" stroke-width="26" stroke-linecap="round"
+          stroke-dasharray="707 942" transform="rotate(-90 256 296)"/>
+  <!-- hands -->
+  <circle cx="256" cy="296" r="14" fill="#ba4949"/>
+  <rect x="248" y="206" width="16" height="100" rx="8" fill="#ba4949" transform="rotate(35 256 296)"/>
+  <rect x="248" y="236" width="16" height="74" rx="8" fill="#ba4949" transform="rotate(-60 256 296)"/>
+  <!-- leaf -->
+  <path d="M256 150c-14-26-46-40-78-34 6 32 30 56 60 60 0 0-2 8-2 18h40c0-10-2-18-2-18 30-4 54-28 60-60-32-6-64 8-78 34z" fill="#4caf50"/>
+</svg>

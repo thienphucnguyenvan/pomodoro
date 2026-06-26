@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#ba4949" />
+  <meta name="description" content="Pomodoro - Ứng dụng giúp bạn tập trung, quản lý công việc và theo dõi thời gian hiệu quả." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pomodoro" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="icon" id="favicon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Pomodoro — Focus Timer</title>
+</head>
+<body>
+  <canvas id="confetti" class="confetti"></canvas>
+
+  <button id="zenExit" class="zen-exit" hidden aria-label="Thoát chế độ tập trung">
+    <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
+
+  <div id="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 7c-1.2 0-2.2.4-3 1-.8-.6-1.8-1-3-1C3.8 7 2 8.9 2 11.5 2 15.5 6.5 20 12 22c5.5-2 10-6.5 10-10.5C22 8.9 20.2 7 18 7c-1.2 0-2.2.4-3 1-.8-.6-1.8-1-3-1z"/>
+          <path d="M12 7c0-2 1.5-3.5 4-4 0 2-1.5 3.5-4 4z" fill="#4caf50"/>
+        </svg>
+        <span class="brand-name">Pomodoro</span>
+      </div>
+      <div class="topbar-actions">
+        <button id="zenBtn" class="icon-btn" aria-label="Chế độ tập trung" title="Chế độ tập trung">
+          <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        </button>
+        <button id="installBtn" class="icon-btn" aria-label="Cài đặt ứng dụng" title="Cài đặt ứng dụng" hidden>
+          <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+        </button>
+        <button id="langBtn" class="icon-btn lang-btn" aria-label="Language" title="Ngôn ngữ"><span id="langCode">VI</span></button>
+        <button id="statsBtn" class="icon-btn" aria-label="Thống kê" title="Thống kê">
+          <svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        </button>
+        <button id="settingsBtn" class="icon-btn" aria-label="Cài đặt" title="Cài đặt">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Mode tabs -->
+      <div class="modes">
+        <button class="mode-tab active" data-mode="pomodoro" data-i18n="mode.pomodoro">Pomodoro</button>
+        <button class="mode-tab" data-mode="short" data-i18n="mode.short">Nghỉ ngắn</button>
+        <button class="mode-tab" data-mode="long" data-i18n="mode.long">Nghỉ dài</button>
+      </div>
+
+      <!-- Timer ring -->
+      <div class="timer-wrap">
+        <svg class="ring" viewBox="0 0 280 280">
+          <circle class="ring-bg" cx="140" cy="140" r="130" />
+          <circle class="ring-progress" cx="140" cy="140" r="130" />
+        </svg>
+        <div class="timer-center">
+          <div id="time" class="time">25:00</div>
+          <div id="modeLabel" class="mode-label" data-i18n="label.focusTime">Giờ tập trung</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button id="resetBtn" class="icon-btn ctrl-side" aria-label="Đặt lại" title="Đặt lại">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>
+        </button>
+        <button id="startBtn" class="btn-main" data-i18n="btn.start">BẮT ĐẦU</button>
+        <button id="skipBtn" class="icon-btn ctrl-side" aria-label="Bỏ qua" title="Bỏ qua">
+          <svg viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>
+        </button>
+      </div>
+
+      <div class="round-info">
+        <span id="roundCount">#1</span>
+        <span class="round-sep">·</span>
+        <span id="roundHint" data-i18n="hint.focus">Đến lúc tập trung!</span>
+      </div>
+
+      <!-- Daily goal -->
+      <section class="goal">
+        <div class="goal-head">
+          <span data-i18n="goal.today">Mục tiêu hôm nay</span>
+          <span id="goalText" class="goal-text">0/8 🍅</span>
+        </div>
+        <div class="goal-track"><div id="goalBar" class="goal-bar"></div></div>
+      </section>
+
+      <!-- Quote -->
+      <p id="quote" class="quote"></p>
+
+      <!-- Tasks -->
+      <section class="tasks">
+        <div class="tasks-header">
+          <h2 data-i18n="tasks.title">Công việc</h2>
+          <button id="clearDoneBtn" class="text-btn" data-i18n="tasks.clearDone">Xoá đã xong</button>
+        </div>
+        <ul id="taskList" class="task-list"></ul>
+        <form id="taskForm" class="task-add">
+          <input id="taskInput" type="text" data-i18n-ph="tasks.placeholder" placeholder="Thêm công việc..." autocomplete="off" maxlength="120" />
+          <div class="est-wrap">
+            <button type="button" id="estMinus" class="est-btn" aria-label="Giảm">−</button>
+            <span id="estVal" class="est-val">1</span>
+            <button type="button" id="estPlus" class="est-btn" aria-label="Tăng">+</button>
+          </div>
+          <button type="submit" class="add-btn" aria-label="Thêm">+</button>
+        </form>
+        <div id="taskSummary" class="task-summary"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 data-i18n="settings.title">Cài đặt</h2>
+        <button class="icon-btn modal-close" data-close aria-label="Đóng">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <h3 class="group-title" data-i18n="settings.durations">⏱ Thời lượng (phút)</h3>
+        <div class="setting-row"><label for="durPomodoro" data-i18n="mode.pomodoro">Pomodoro</label><input id="durPomodoro" type="number" min="1" max="180" /></div>
+        <div class="setting-row"><label for="durShort" data-i18n="mode.short">Nghỉ ngắn</label><input id="durShort" type="number" min="1" max="60" /></div>
+        <div class="setting-row"><label for="durLong" data-i18n="mode.long">Nghỉ dài</label><input id="durLong" type="number" min="1" max="60" /></div>
+
+        <h3 class="group-title" data-i18n="settings.auto">🔁 Tự động & mục tiêu</h3>
+        <div class="setting-row"><label for="longInterval" data-i18n="settings.longInterval">Số pomodoro trước nghỉ dài</label><input id="longInterval" type="number" min="1" max="12" /></div>
+        <div class="setting-row"><label for="dailyGoal" data-i18n="settings.dailyGoal">Mục tiêu pomodoro/ngày</label><input id="dailyGoal" type="number" min="1" max="50" /></div>
+        <div class="setting-row toggle-row"><label for="autoBreaks" data-i18n="settings.autoBreaks">Tự động bắt đầu nghỉ</label><label class="switch"><input id="autoBreaks" type="checkbox" /><span class="slider"></span></label></div>
+        <div class="setting-row toggle-row"><label for="autoPomodoros" data-i18n="settings.autoPomodoros">Tự động bắt đầu Pomodoro</label><label class="switch"><input id="autoPomodoros" type="checkbox" /><span class="slider"></span></label></div>
+
+        <h3 class="group-title" data-i18n="settings.sound">🔔 Âm thanh</h3>
+        <div class="setting-row toggle-row"><label for="soundOn" data-i18n="settings.alarmOn">Chuông báo</label><label class="switch"><input id="soundOn" type="checkbox" /><span class="slider"></span></label></div>
+        <div class="setting-row"><label for="alarmSound" data-i18n="settings.alarmSound">Kiểu chuông</label>
+          <select id="alarmSound">
+            <option value="beep" data-i18n="alarm.beep">Bíp</option>
+            <option value="chime" data-i18n="alarm.chime">Chuông gió</option>
+            <option value="bell" data-i18n="alarm.bell">Chuông</option>
+            <option value="digital" data-i18n="alarm.digital">Kỹ thuật số</option>
+          </select>
+        </div>
+        <div class="setting-row"><label for="volume" data-i18n="settings.volume">Âm lượng chuông</label><input id="volume" type="range" min="0" max="100" /></div>
+        <div class="setting-row toggle-row"><label for="tickingOn" data-i18n="settings.ticking">Tiếng tích tắc khi tập trung</label><label class="switch"><input id="tickingOn" type="checkbox" /><span class="slider"></span></label></div>
+        <div class="setting-row"><label for="ambient" data-i18n="settings.ambient">Âm thanh nền</label>
+          <select id="ambient">
+            <option value="none" data-i18n="ambient.none">Tắt</option>
+            <option value="white" data-i18n="ambient.white">Ồn trắng</option>
+            <option value="brown" data-i18n="ambient.brown">Ồn nâu</option>
+            <option value="pink" data-i18n="ambient.pink">Ồn hồng</option>
+            <option value="rain" data-i18n="ambient.rain">Tiếng mưa</option>
+          </select>
+        </div>
+        <div class="setting-row"><label for="ambientVol" data-i18n="settings.ambientVol">Âm lượng nền</label><input id="ambientVol" type="range" min="0" max="100" /></div>
+
+        <h3 class="group-title" data-i18n="settings.notify">📢 Thông báo & màn hình</h3>
+        <div class="setting-row toggle-row"><label for="notifyOn" data-i18n="settings.systemNotify">Thông báo hệ thống</label><label class="switch"><input id="notifyOn" type="checkbox" /><span class="slider"></span></label></div>
+        <div class="setting-row toggle-row"><label for="wakeLockOn" data-i18n="settings.wakeLock">Giữ màn hình sáng khi chạy</label><label class="switch"><input id="wakeLockOn" type="checkbox" /><span class="slider"></span></label></div>
+
+        <h3 class="group-title" data-i18n="settings.appearance">🎨 Giao diện</h3>
+        <div class="setting-row"><label data-i18n="settings.theme">Bảng màu</label>
+          <div id="themeSwatches" class="swatches"></div>
+        </div>
+        <div class="setting-row"><label for="appearance" data-i18n="settings.mode">Chế độ</label>
+          <select id="appearance">
+            <option value="auto" data-i18n="mode.auto">Tự động</option>
+            <option value="light" data-i18n="mode.light">Sáng</option>
+            <option value="dark" data-i18n="mode.dark">Tối</option>
+          </select>
+        </div>
+
+        <h3 class="group-title" data-i18n="settings.data">💾 Dữ liệu</h3>
+        <div class="data-row">
+          <button id="exportBtn" class="btn-secondary" data-i18n="settings.export">Xuất sao lưu</button>
+          <button id="importBtn" class="btn-secondary" data-i18n="settings.import">Nhập sao lưu</button>
+        </div>
+        <input id="importFile" type="file" accept="application/json" hidden />
+
+        <button id="resetSettings" class="btn-secondary danger" data-i18n="settings.reset">Khôi phục mặc định</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats modal -->
+  <div id="statsModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 data-i18n="stats.title">Thống kê</h2>
+        <button class="icon-btn modal-close" data-close aria-label="Đóng">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="stat-cards">
+          <div class="stat-card"><div id="statToday" class="stat-num">0</div><div class="stat-cap" data-i18n="stats.today">Pomodoro hôm nay</div></div>
+          <div class="stat-card"><div id="statFocus" class="stat-num">0p</div><div class="stat-cap" data-i18n="stats.focus">Tập trung hôm nay</div></div>
+          <div class="stat-card"><div id="statStreak" class="stat-num">0</div><div class="stat-cap" data-i18n="stats.streak">Chuỗi ngày</div></div>
+          <div class="stat-card"><div id="statBest" class="stat-num">0</div><div class="stat-cap" data-i18n="stats.best">Chuỗi dài nhất</div></div>
+          <div class="stat-card"><div id="statWeek" class="stat-num">0</div><div class="stat-cap" data-i18n="stats.week">Pomodoro tuần này</div></div>
+          <div class="stat-card"><div id="statTotal" class="stat-num">0</div><div class="stat-cap" data-i18n="stats.total">Tổng pomodoro</div></div>
+        </div>
+        <h3 class="group-title" data-i18n="stats.last7">7 ngày gần đây</h3>
+        <div id="weekChart" class="week-chart"></div>
+
+        <h3 class="group-title" data-i18n="stats.activity">Hoạt động 12 tuần</h3>
+        <div class="heatmap-wrap"><div id="heatmap" class="heatmap"></div></div>
+        <div class="heat-legend"><span data-i18n="stats.less">Ít</span><span class="hl hl0"></span><span class="hl hl1"></span><span class="hl hl2"></span><span class="hl hl3"></span><span class="hl hl4"></span><span data-i18n="stats.more">Nhiều</span></div>
+
+        <h3 class="group-title" data-i18n="stats.month">Theo tháng</h3>
+        <div class="month-head">
+          <button id="monthPrev" class="month-nav" aria-label="Tháng trước">‹</button>
+          <span id="monthLabel" class="month-label"></span>
+          <button id="monthNext" class="month-nav" aria-label="Tháng sau">›</button>
+        </div>
+        <div id="monthGrid" class="month-grid"></div>
+
+        <h3 class="group-title" data-i18n="stats.achievements">Thành tựu</h3>
+        <div id="achievements" class="achievements"></div>
+
+        <h3 class="group-title" data-i18n="stats.history">Lịch sử gần đây</h3>
+        <ul id="historyList" class="history-list"></ul>
+
+        <button id="resetStats" class="btn-secondary danger" data-i18n="stats.reset">Xoá thống kê</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit task modal -->
+  <div id="editModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 data-i18n="edit.title">Sửa công việc</h2>
+        <button class="icon-btn modal-close" data-close aria-label="Đóng">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label" for="editName" data-i18n="edit.name">Tên công việc</label>
+        <input id="editName" type="text" class="field-input" maxlength="120" />
+        <label class="field-label" data-i18n="edit.est">Ước lượng (pomodoro)</label>
+        <div class="est-wrap edit-est">
+          <button type="button" id="editEstMinus" class="est-btn">−</button>
+          <span id="editEstVal" class="est-val">1</span>
+          <button type="button" id="editEstPlus" class="est-btn">+</button>
+        </div>
+        <label class="field-label" for="editNote" data-i18n="edit.note">Ghi chú</label>
+        <textarea id="editNote" class="field-input" rows="2" maxlength="240"></textarea>
+        <div class="reorder-row">
+          <button id="moveUp" class="btn-secondary" data-i18n="edit.moveUp">↑ Lên trên</button>
+          <button id="moveDown" class="btn-secondary" data-i18n="edit.moveDown">↓ Xuống dưới</button>
+        </div>
+        <button id="editSave" class="btn-secondary primary" data-i18n="edit.save">Lưu</button>
+        <button id="editDelete" class="btn-secondary danger" data-i18n="edit.delete">Xoá công việc</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
