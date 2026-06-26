@@ -17,6 +17,8 @@
 - 📱 **Giữ màn hình sáng** khi đồng hồ chạy (Screen Wake Lock).
 - 🎉 **Hiệu ứng pháo giấy** khi hoàn thành mỗi pomodoro.
 - 🧘 **Chế độ tập trung (Zen)**: ẩn mọi thứ, chỉ còn đồng hồ, có thể bật toàn màn hình.
+- 🏆 **Hệ thống thành tựu** (12 huy hiệu: cột mốc, chuỗi ngày, dậy sớm, cú đêm...) mở khoá kèm thông báo.
+- 📅 **Lịch theo tháng** điều hướng được, hiển thị số pomodoro mỗi ngày.
 - 🗂 **Lịch sử phiên** + **bản đồ nhiệt hoạt động 12 tuần** kiểu GitHub.
 - 📝 **Ghi chú cho từng công việc**.
 - 🌐 **Đa ngôn ngữ** (Tiếng Việt / English) chuyển ngay tức thì.

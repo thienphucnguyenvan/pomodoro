@@ -289,6 +289,27 @@ body.zen .ctrl-side { background: rgba(255,255,255,0.16); }
 .history-time { color: #999; font-size: 12px; white-space: nowrap; }
 .history-empty { text-align: center; color: #999; font-size: 13px; padding: 12px 0; }
 
+/* Monthly calendar */
+.month-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.month-nav { width: 36px; height: 36px; border-radius: 9px; border: 1px solid var(--modal-line); background: transparent; color: var(--modal-text); font-size: 20px; cursor: pointer; }
+.month-nav:active { background: var(--modal-line); }
+.month-label { font-weight: 700; color: var(--modal-text); font-size: 15px; }
+.month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.month-dow { text-align: center; font-size: 11px; color: #999; font-weight: 700; padding-bottom: 2px; }
+.month-cell { aspect-ratio: 1; border-radius: 8px; background: var(--modal-line); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: var(--modal-text); position: relative; }
+.month-cell.empty { background: transparent; }
+.month-cell.has { background: color-mix(in srgb, var(--bg) 22%, transparent); }
+.month-cell .mc-day { font-weight: 600; }
+.month-cell .mc-count { font-size: 10px; color: var(--bg); font-weight: 800; }
+.month-cell.today { outline: 2px solid var(--bg); }
+
+/* Achievements */
+.achievements { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
+.ach { background: var(--modal-line); border-radius: 12px; padding: 12px 6px; text-align: center; opacity: 0.4; filter: grayscale(1); transition: opacity 0.2s; }
+.ach.earned { opacity: 1; filter: none; }
+.ach-icon { font-size: 26px; line-height: 1; }
+.ach-name { font-size: 10px; margin-top: 5px; color: var(--modal-text); font-weight: 600; line-height: 1.2; }
+
 /* Task note */
 .task-note { font-size: 12px; color: #999; margin-top: 3px; font-style: italic; word-break: break-word; }
 body.dark .task-note { color: #8b8b94; }

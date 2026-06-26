@@ -49,6 +49,7 @@
       'stats.activity': 'Hoạt động 12 tuần', 'stats.history': 'Lịch sử gần đây', 'stats.less': 'Ít', 'stats.more': 'Nhiều',
       'stats.historyEmpty': 'Chưa có phiên nào hoàn thành.', 'stats.noTask': 'Không có công việc',
       'edit.note': 'Ghi chú', 'toast.installed': 'Đã cài đặt ứng dụng! 🎉', 'time.today': 'Hôm nay', 'time.yesterday': 'Hôm qua',
+      'stats.month': 'Theo tháng', 'stats.achievements': 'Thành tựu', 'toast.achievement': 'Mở khoá thành tựu: {name} 🏆',
       'unit.min': 'p',
     },
     en: {
@@ -94,6 +95,7 @@
       'stats.activity': '12-week activity', 'stats.history': 'Recent history', 'stats.less': 'Less', 'stats.more': 'More',
       'stats.historyEmpty': 'No completed sessions yet.', 'stats.noTask': 'No task',
       'edit.note': 'Note', 'toast.installed': 'App installed! 🎉', 'time.today': 'Today', 'time.yesterday': 'Yesterday',
+      'stats.month': 'Monthly', 'stats.achievements': 'Achievements', 'toast.achievement': 'Achievement unlocked: {name} 🏆',
       'unit.min': 'm',
     },
   };
@@ -140,6 +142,21 @@
     { vi: '“Hoàn thành tốt hơn hoàn hảo.”', en: '“Done is better than perfect.”' },
   ];
 
+  const ACHIEVEMENTS = [
+    { id: 'first', icon: '🌱', vi: 'Khởi đầu', en: 'First step', check: (f) => f.total >= 1 },
+    { id: 'ten', icon: '🔟', vi: '10 pomodoro', en: '10 pomodoros', check: (f) => f.total >= 10 },
+    { id: 'fifty', icon: '⭐', vi: '50 pomodoro', en: '50 pomodoros', check: (f) => f.total >= 50 },
+    { id: 'hundred', icon: '💯', vi: '100 pomodoro', en: '100 pomodoros', check: (f) => f.total >= 100 },
+    { id: 'fivehundred', icon: '👑', vi: '500 pomodoro', en: '500 pomodoros', check: (f) => f.total >= 500 },
+    { id: 'streak3', icon: '🔥', vi: 'Chuỗi 3 ngày', en: '3-day streak', check: (f) => f.bestStreak >= 3 },
+    { id: 'streak7', icon: '🚀', vi: 'Chuỗi 7 ngày', en: '7-day streak', check: (f) => f.bestStreak >= 7 },
+    { id: 'streak30', icon: '🏆', vi: 'Chuỗi 30 ngày', en: '30-day streak', check: (f) => f.bestStreak >= 30 },
+    { id: 'goal', icon: '🎯', vi: 'Đạt mục tiêu', en: 'Goal hit', check: (f) => f.goalHit },
+    { id: 'marathon', icon: '🏃', vi: '10 việc/ngày', en: '10 in a day', check: (f) => f.maxDay >= 10 },
+    { id: 'earlyBird', icon: '🌅', vi: 'Dậy sớm', en: 'Early bird', check: (f) => f.earlyBird },
+    { id: 'nightOwl', icon: '🦉', vi: 'Cú đêm', en: 'Night owl', check: (f) => f.nightOwl },
+  ];
+
   // ---------- Storage ----------
   const store = {
     get(key, fb) { try { const v = localStorage.getItem(key); return v == null ? fb : JSON.parse(v); } catch { return fb; } },
@@ -152,7 +169,9 @@
   let tasks = store.get('tasks', []);
   let stats = store.get('stats', { history: {}, total: 0, bestStreak: 0, sessions: [] });
   if (!Array.isArray(stats.sessions)) stats.sessions = [];
+  if (!Array.isArray(stats.achievements)) stats.achievements = [];
   let activeTaskId = store.get('activeTaskId', null);
+  let viewMonth = new Date();
 
   let mode = 'pomodoro';
   let remaining = settings.pomodoro * 60;
@@ -506,6 +525,7 @@
 
     if (mode === 'pomodoro') {
       recordPomodoro(); completedPomodoros += 1; incrementActiveTask();
+      checkAchievements();
       launchConfetti(); renderGoal();
       const today = stats.history[todayKey()];
       if (today && today.count === settings.dailyGoal) toast(t('toast.goalReached'));
@@ -602,6 +622,8 @@
     });
 
     renderHeatmap();
+    renderMonth();
+    renderAchievements();
     renderHistory();
   }
 
@@ -654,6 +676,69 @@
       const tm = document.createElement('span'); tm.className = 'history-time'; tm.textContent = relTime(s.ts);
       li.appendChild(name); li.appendChild(tm); list.appendChild(li);
     });
+  }
+
+  // ---------- Achievements ----------
+  function computeFacts() {
+    let maxDay = 0, goalHit = false;
+    for (const k in stats.history) {
+      const c = stats.history[k].count || 0;
+      if (c > maxDay) maxDay = c;
+      if (c >= settings.dailyGoal) goalHit = true;
+    }
+    let earlyBird = false, nightOwl = false;
+    (stats.sessions || []).forEach((s) => { const h = new Date(s.ts).getHours(); if (h < 7) earlyBird = true; if (h >= 22) nightOwl = true; });
+    return { total: stats.total || 0, bestStreak: stats.bestStreak || 0, maxDay, goalHit, earlyBird, nightOwl };
+  }
+  function syncAchievements() {
+    const f = computeFacts();
+    const earned = ACHIEVEMENTS.filter((a) => a.check(f)).map((a) => a.id);
+    stats.achievements = earned; store.set('stats', stats);
+  }
+  function checkAchievements() {
+    const f = computeFacts();
+    ACHIEVEMENTS.forEach((a) => {
+      if (a.check(f) && !stats.achievements.includes(a.id)) {
+        stats.achievements.push(a.id);
+        store.set('stats', stats);
+        toast(t('toast.achievement', { name: a[lang] || a.vi }));
+      }
+    });
+  }
+  function renderAchievements() {
+    const wrap = $('#achievements'); if (!wrap) return;
+    wrap.innerHTML = '';
+    const f = computeFacts();
+    ACHIEVEMENTS.forEach((a) => {
+      const earned = a.check(f);
+      const el = document.createElement('div'); el.className = 'ach' + (earned ? ' earned' : '');
+      el.innerHTML = `<div class="ach-icon">${a.icon}</div><div class="ach-name"></div>`;
+      el.querySelector('.ach-name').textContent = a[lang] || a.vi;
+      el.title = a[lang] || a.vi;
+      wrap.appendChild(el);
+    });
+  }
+
+  // ---------- Monthly calendar ----------
+  function renderMonth() {
+    const grid = $('#monthGrid'); if (!grid) return;
+    grid.innerHTML = '';
+    const y = viewMonth.getFullYear(), m = viewMonth.getMonth();
+    $('#monthLabel').textContent = viewMonth.toLocaleDateString(lang === 'en' ? 'en-US' : 'vi-VN', { month: 'long', year: 'numeric' });
+    const dows = lang === 'en' ? ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] : ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    dows.forEach((d) => { const h = document.createElement('div'); h.className = 'month-dow'; h.textContent = d; grid.appendChild(h); });
+    const first = new Date(y, m, 1).getDay();
+    const days = new Date(y, m + 1, 0).getDate();
+    for (let i = 0; i < first; i++) { const e = document.createElement('div'); e.className = 'month-cell empty'; grid.appendChild(e); }
+    const todayStr = todayKey();
+    for (let d = 1; d <= days; d++) {
+      const dt = new Date(y, m, d); const k = todayKey(dt);
+      const c = (stats.history[k]?.count) || 0;
+      const cell = document.createElement('div');
+      cell.className = 'month-cell' + (c > 0 ? ' has' : '') + (k === todayStr ? ' today' : '');
+      cell.innerHTML = `<span class="mc-day">${d}</span>${c ? `<span class="mc-count">${c}🍅</span>` : ''}`;
+      grid.appendChild(cell);
+    }
   }
 
   // ---------- Tasks ----------
@@ -833,7 +918,7 @@
         if (!d || typeof d !== 'object') throw new Error('bad');
         if (d.settings) { settings = Object.assign({}, DEFAULT_SETTINGS, d.settings); store.set('settings', settings); }
         if (Array.isArray(d.tasks)) { tasks = d.tasks; saveTasks(); }
-        if (d.stats) { stats = d.stats; store.set('stats', stats); }
+        if (d.stats) { stats = d.stats; if (!Array.isArray(stats.sessions)) stats.sessions = []; if (!Array.isArray(stats.achievements)) stats.achievements = []; store.set('stats', stats); syncAchievements(); }
         activeTaskId = d.activeTaskId || null; store.set('activeTaskId', activeTaskId);
         lang = settings.lang || 'vi';
         if (!running) { remaining = durationFor(mode); totalSeconds = remaining; }
@@ -941,8 +1026,10 @@
     });
     $('#resetStats').addEventListener('click', () => {
       if (!confirm(t('confirm.resetStats'))) return;
-      stats = { history: {}, total: 0, bestStreak: 0 }; store.set('stats', stats); renderStats(); renderGoal(); toast(t('toast.statsCleared'));
+      stats = { history: {}, total: 0, bestStreak: 0, sessions: [], achievements: [] }; store.set('stats', stats); renderStats(); renderGoal(); toast(t('toast.statsCleared'));
     });
+    $('#monthPrev').addEventListener('click', () => { viewMonth.setMonth(viewMonth.getMonth() - 1); renderMonth(); });
+    $('#monthNext').addEventListener('click', () => { viewMonth.setMonth(viewMonth.getMonth() + 1); renderMonth(); });
     $('#exportBtn').addEventListener('click', exportData);
     $('#importBtn').addEventListener('click', () => $('#importFile').click());
     $('#importFile').addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
@@ -976,6 +1063,7 @@
   // ---------- Init ----------
   function init() {
     estValEl.textContent = estNew;
+    syncAchievements();
     restoreRuntime();
     applyTheme();
     setMode(mode, { reset: false });
